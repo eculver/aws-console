@@ -24,3 +24,6 @@ jobs:
 
       - name: Run tests
         run: go test -v ./...
+
+      - name: Run release helper tests
+        run: bash ./scripts/release_test.sh

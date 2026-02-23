@@ -56,6 +56,7 @@ func NewRootCmd() *cobra.Command {
 
 func newRootCmd(deps runDeps, runner workflowRunner) *cobra.Command {
 	var profile string
+	var showVersion bool
 
 	rootCmd := &cobra.Command{
 		Use:   "aws-console",
@@ -65,6 +66,11 @@ in your default web browser. If credentials are expired or missing, it will
 attempt to run 'aws sso login' to refresh them.`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if showVersion {
+				fmt.Fprintln(deps.stdout, Version)
+				return nil
+			}
+
 			resolvedProfile := profile
 			if resolvedProfile == "" {
 				resolvedProfile = os.Getenv("AWS_PROFILE")
@@ -74,6 +80,7 @@ attempt to run 'aws sso login' to refresh them.`,
 	}
 
 	rootCmd.Flags().StringVarP(&profile, "profile", "p", "", "AWS profile to use (defaults to AWS_PROFILE env var)")
+	rootCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "Print the current version")
 
 	return rootCmd
 }

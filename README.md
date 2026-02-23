@@ -26,6 +26,7 @@ aws-console [flags]
 
 Flags:
   -p, --profile string   AWS profile to use (defaults to AWS_PROFILE env var)
+  -v, --version          Print the current version
   -h, --help             help for aws-console
 ```
 
@@ -38,6 +39,9 @@ aws-console
 
 # Specify a profile explicitly
 aws-console -p my-profile
+
+# Print the build version
+aws-console --version
 ```
 
 ## Prerequisites
@@ -73,9 +77,53 @@ Other useful targets:
 | -------------------- | --------------------------------------------- |
 | `make build`         | Build the `aws-console` binary                |
 | `make test`          | Run all tests                                 |
+| `make test-release`  | Run release helper script tests               |
 | `make coverage`      | Run tests and print coverage summary          |
 | `make coverage-html` | Generate and open HTML coverage report        |
 | `make install`       | Install via `go install`                      |
 | `make fmt`           | Format source files                           |
 | `make vet`           | Run `go vet`                                  |
 | `make clean`         | Remove the built binary                       |
+
+### Releases
+
+Releases are semver tags (`vMAJOR.MINOR.PATCH`) that trigger the GitHub `Release` workflow.
+
+- Create a release tag with the helper script:
+
+  ```bash
+  ./scripts/release.sh major -m "Release v2.0.0" [--push] [--yes]
+  ./scripts/release.sh minor -m "Release v1.3.0" [--push] [--yes]
+  ./scripts/release.sh bugfix -m "Release v1.2.4" [--push] [--yes]
+  ```
+
+- `--push` pushes the tag to `origin` (which triggers GitHub release publishing).
+- `--yes` runs non-interactively (no confirmation prompts).
+- Without `--push`, the script reminds you to push the tag manually.
+
+You can also call this through Make:
+
+```bash
+make release ARGS='major -m "Release v2.0.0" --push --yes'
+```
+
+or with explicit convenience targets:
+
+```bash
+make release-major MESSAGE="Release v2.0.0" PUSH=1 YES=1
+make release-minor MESSAGE="Release v1.3.0" PUSH=1 YES=1
+make release-bugfix MESSAGE="Release v1.2.4" PUSH=1 YES=1
+```
+
+The GitHub release notes are generated from commits since the previous semver tag. Conventional commit messages are grouped into:
+
+- Breaking changes
+- Features (`feat:`)
+- Bug fixes (`fix:`)
+- Other changes
+
+You can generate notes locally with:
+
+```bash
+./scripts/generate-release-notes.sh --current-tag v1.2.4
+```

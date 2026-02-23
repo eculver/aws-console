@@ -1,0 +1,115 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build release artifacts
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+
+    env:
+      BINARY_NAME: aws-console
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build archive
+        shell: bash
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          EXT=""
+          if [[ "${GOOS}" == "windows" ]]; then
+            EXT=".exe"
+          fi
+
+          OUT_DIR="dist"
+          mkdir -p "${OUT_DIR}"
+          BIN_PATH="${OUT_DIR}/${BINARY_NAME}${EXT}"
+          ARCHIVE_BASE="${BINARY_NAME}_${VERSION}_${GOOS}_${GOARCH}"
+
+          go build -trimpath -ldflags "-s -w -X github.com/eculver/aws-console/cmd.Version=${VERSION}" -o "${BIN_PATH}" .
+
+          if [[ "${GOOS}" == "windows" ]]; then
+            (cd "${OUT_DIR}" && zip "${ARCHIVE_BASE}.zip" "${BINARY_NAME}${EXT}")
+          else
+            (cd "${OUT_DIR}" && tar -czf "${ARCHIVE_BASE}.tar.gz" "${BINARY_NAME}${EXT}")
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+
+  release:
+    name: Publish GitHub release
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate release notes
+        id: notes
+        shell: bash
+        env:
+          CURRENT_TAG: ${{ github.ref_name }}
+          REPO_URL: https://github.com/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          notes_file="RELEASE_NOTES.md"
+          ./scripts/generate-release-notes.sh --current-tag "${CURRENT_TAG}" --repo-url "${REPO_URL}" --output "${notes_file}"
+          echo "notes_file=${notes_file}" >> "${GITHUB_OUTPUT}"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: ${{ steps.notes.outputs.notes_file }}
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
