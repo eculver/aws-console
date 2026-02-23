@@ -404,6 +404,59 @@ func TestNewRootCmdProfileFlagConfigured(t *testing.T) {
 	}
 }
 
+func TestNewRootCmdVersionFlagConfigured(t *testing.T) {
+	t.Parallel()
+
+	root := NewRootCmd()
+	flag := root.Flags().Lookup("version")
+	if flag == nil {
+		t.Fatal("expected version flag to be registered")
+	}
+	if flag.Shorthand != "v" {
+		t.Fatalf("expected shorthand 'v', got %q", flag.Shorthand)
+	}
+}
+
+func TestNewRootCmdPrintsVersionAndSkipsWorkflow(t *testing.T) {
+	t.Parallel()
+
+	previousVersion := Version
+	Version = "v1.2.3-test"
+	t.Cleanup(func() {
+		Version = previousVersion
+	})
+
+	stdout := &bytes.Buffer{}
+	runnerCalls := 0
+
+	deps := runDeps{
+		awsService:      &mocks.Service{},
+		federation:      &mocks.FederationBuilder{},
+		login:           func(profile string) error { return nil },
+		open:            func(targetURL string) error { return nil },
+		stdout:          stdout,
+		stderr:          &bytes.Buffer{},
+		sessionDuration: sessionDuration,
+	}
+
+	root := newRootCmd(deps, func(ctx context.Context, profile string, deps runDeps) error {
+		runnerCalls++
+		return nil
+	})
+	root.SetArgs([]string{"--version"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected execute error: %v", err)
+	}
+
+	if runnerCalls != 0 {
+		t.Fatalf("expected workflow runner to be skipped, got %d calls", runnerCalls)
+	}
+	if got := strings.TrimSpace(stdout.String()); got != "v1.2.3-test" {
+		t.Fatalf("expected version output %q, got %q", "v1.2.3-test", got)
+	}
+}
+
 func TestSSOLogin(t *testing.T) {
 	t.Parallel()
 
