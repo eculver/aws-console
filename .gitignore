@@ -1,2 +1,5 @@
 # Built binary
 /aws-console
+
+# Default filename for release notes
+RELEASE_NOTES.md
