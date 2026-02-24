@@ -40,6 +40,13 @@ infer_repo_url() {
   echo "${remote_url}"
 }
 
+linkify_pr_refs() {
+  local subject="$1"
+  local repo_url="$2"
+  # Replace (#NNN) with ([#NNN](repo_url/pull/NNN)); no-op when no PR ref is present.
+  echo "${subject}" | sed -E 's|\(#([0-9]+)\)|([#\1]('"${repo_url}"'\/pull\/\1))|g'
+}
+
 parse_semver() {
   local tag="$1"
   if [[ "${tag}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
@@ -140,17 +147,22 @@ main() {
     echo "## Release ${current_tag}"
     echo
     if [[ -n "${prev_tag}" ]]; then
+      echo "- Date: $(date +%Y-%m-%d)"
       echo "- Previous version: ${prev_tag}"
       echo "- Release type: ${release_kind}"
       echo "- Compare: ${repo_url}/compare/${prev_tag}...${current_tag}"
     else
+      echo "- Date: $(date +%Y-%m-%d)"
       echo "- Previous version: none"
       echo "- Release type: initial"
     fi
     echo
   } > "${output}"
 
-  mapfile -t commit_lines < <(git log --pretty=format:'%s|%h' "${range}")
+  local commit_lines=()
+  while IFS= read -r line; do
+    commit_lines+=("${line}")
+  done < <(git log --pretty=format:'%s|%h' "${range}")
   if [[ ${#commit_lines[@]} -eq 0 ]]; then
     echo "No commits found in range ${range}" >> "${output}"
     echo "Wrote ${output}"
@@ -163,10 +175,11 @@ main() {
   local others=""
 
   for line in "${commit_lines[@]}"; do
-    local subject sha item header
+    local subject sha item header linked_subject
     subject="${line%%|*}"
     sha="${line##*|}"
-    item="- ${subject} (${repo_url}/commit/${sha})"
+    linked_subject="$(linkify_pr_refs "${subject}" "${repo_url}")"
+    item="- ${linked_subject} ([${sha}](${repo_url}/commit/${sha}))"
     header="${subject%%:*}"
 
     if [[ "${subject}" == *"BREAKING CHANGE"* ]] || [[ "${header}" == *"!" ]]; then
