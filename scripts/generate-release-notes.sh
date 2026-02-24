@@ -40,6 +40,13 @@ infer_repo_url() {
   echo "${remote_url}"
 }
 
+linkify_pr_refs() {
+  local subject="$1"
+  local repo_url="$2"
+  # Replace (#NNN) with ([#NNN](repo_url/pull/NNN)); no-op when no PR ref is present.
+  echo "${subject}" | sed -E 's|\(#([0-9]+)\)|([#\1]('"${repo_url}"'\/pull\/\1))|g'
+}
+
 parse_semver() {
   local tag="$1"
   if [[ "${tag}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
@@ -166,10 +173,11 @@ main() {
   local others=""
 
   for line in "${commit_lines[@]}"; do
-    local subject sha item header
+    local subject sha item header linked_subject
     subject="${line%%|*}"
     sha="${line##*|}"
-    item="- ${subject} (${repo_url}/commit/${sha})"
+    linked_subject="$(linkify_pr_refs "${subject}" "${repo_url}")"
+    item="- ${linked_subject}"
     header="${subject%%:*}"
 
     if [[ "${subject}" == *"BREAKING CHANGE"* ]] || [[ "${header}" == *"!" ]]; then
