@@ -5,10 +5,9 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  ./scripts/release.sh major|minor|bugfix -m "Message" [--push|-p] [--yes|-y]
+  ./scripts/release.sh major|minor|bugfix [--push|-p] [--yes|-y]
 
 Options:
-  -m, --message  Annotated tag message (required)
   -p, --push     Push the created tag to origin
   -y, --yes      Skip confirmation prompts
   -h, --help     Show this help text
@@ -63,20 +62,11 @@ main() {
   local bump_type="$1"
   shift
 
-  local message=""
   local do_push=false
   local assume_yes=false
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      -m|--message)
-        if [[ $# -lt 2 ]]; then
-          echo "Error: $1 requires a value." >&2
-          exit 1
-        fi
-        message="$2"
-        shift 2
-        ;;
       -p|--push)
         do_push=true
         shift
@@ -96,12 +86,6 @@ main() {
         ;;
     esac
   done
-
-  if [[ -z "$message" ]]; then
-    echo "Error: release message is required." >&2
-    usage
-    exit 1
-  fi
 
   local current_tag
   current_tag="$(latest_tag)"
@@ -141,7 +125,6 @@ main() {
   echo "Current tag: ${current_tag}"
   echo "Next tag:    ${new_tag}"
   echo "Commit:      ${head_sha}"
-  echo "Message:     ${message}"
   if [[ "$do_push" == true ]]; then
     echo "Push:        yes (origin ${new_tag})"
   else
@@ -155,7 +138,7 @@ main() {
     fi
   fi
 
-  git tag -a "${new_tag}" -m "${message}"
+  git tag -a "${new_tag}" -m "${new_tag}"
   echo "Created tag: ${new_tag}"
 
   if [[ "$do_push" == true ]]; then

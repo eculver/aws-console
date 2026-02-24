@@ -43,7 +43,7 @@ test_bugfix_bump_creates_annotated_tag() {
   setup_repo
 
   local output
-  output="$("${RELEASE_SCRIPT}" bugfix -m "Release v1.2.4" --yes 2>&1)"
+  output="$("${RELEASE_SCRIPT}" bugfix --yes 2>&1)"
 
   assert_contains "${output}" "Created tag: v1.2.4"
   assert_contains "${output}" "Push it with: git push origin v1.2.4"
@@ -51,31 +51,14 @@ test_bugfix_bump_creates_annotated_tag() {
 
   local tag_message
   tag_message="$(git tag -l --format='%(contents)' v1.2.4)"
-  if [[ "${tag_message}" != "Release v1.2.4" ]]; then
-    echo "Assertion failed: expected annotated tag message 'Release v1.2.4', got '${tag_message}'" >&2
+  if [[ "${tag_message}" != "v1.2.4" ]]; then
+    echo "Assertion failed: expected annotated tag message 'v1.2.4', got '${tag_message}'" >&2
     exit 1
   fi
-}
-
-test_missing_message_fails() {
-  setup_repo
-
-  set +e
-  local output
-  output="$("${RELEASE_SCRIPT}" bugfix --yes 2>&1)"
-  local status=$?
-  set -e
-
-  if [[ ${status} -eq 0 ]]; then
-    echo "Assertion failed: expected command to fail when message is missing." >&2
-    exit 1
-  fi
-  assert_contains "${output}" "Error: release message is required."
 }
 
 main() {
   test_bugfix_bump_creates_annotated_tag
-  test_missing_message_fails
   echo "release_test.sh: all tests passed"
 }
 

@@ -42,28 +42,16 @@ vet:
 
 release:
 	@if [ -z "$(ARGS)" ]; then \
-		echo "Usage: make release ARGS='major|minor|bugfix -m \"Message\" [--push] [--yes]'"; \
+		echo "Usage: make release ARGS='major|minor|bugfix [--push] [--yes]'"; \
 		exit 1; \
 	fi
 	@./scripts/release.sh $(ARGS)
 
 release-major:
-	@if [ -z "$(MESSAGE)" ]; then \
-		echo "Usage: make release-major MESSAGE='Message' [PUSH=1] [YES=1]"; \
-		exit 1; \
-	fi
-	@./scripts/release.sh major -m "$(MESSAGE)" $(if $(PUSH),--push,) $(if $(YES),--yes,)
+	@./scripts/release.sh major $(if $(PUSH),--push,) $(if $(YES),--yes,)
 
 release-minor:
-	@if [ -z "$(MESSAGE)" ]; then \
-		echo "Usage: make release-minor MESSAGE='Message' [PUSH=1] [YES=1]"; \
-		exit 1; \
-	fi
-	@./scripts/release.sh minor -m "$(MESSAGE)" $(if $(PUSH),--push,) $(if $(YES),--yes,)
+	@./scripts/release.sh minor $(if $(PUSH),--push,) $(if $(YES),--yes,)
 
 release-bugfix:
-	@if [ -z "$(MESSAGE)" ]; then \
-		echo "Usage: make release-bugfix MESSAGE='Message' [PUSH=1] [YES=1]"; \
-		exit 1; \
-	fi
-	@./scripts/release.sh bugfix -m "$(MESSAGE)" $(if $(PUSH),--push,) $(if $(YES),--yes,)
+	@./scripts/release.sh bugfix $(if $(PUSH),--push,) $(if $(YES),--yes,)
