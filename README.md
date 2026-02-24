@@ -13,6 +13,45 @@ Falls back to using `aws sso` to refresh credentials when a session doesn't exis
 5. Sends the temporary credentials to the [AWS federation endpoint](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_enable-console-custom-url.html) to obtain a sign-in token.
 6. Constructs a pre-authenticated console URL and opens it in your browser.
 
+## Quickstart
+
+`aws-console` is designed for AWS SSO users. If you haven't already, configure SSO with:
+
+```bash
+aws configure sso
+```
+
+This will create a profile entry in `~/.aws/config`. A minimal SSO profile looks like this:
+
+```ini
+[profile admin]
+sso_session = my-sso
+sso_account_id = 123456789012
+sso_role_name = AdministratorAccess
+region = us-east-1
+output = json
+
+[sso-session my-sso]
+sso_start_url = https://my-org.awsapps.com/start
+sso_region = us-east-1
+sso_registration_scopes = sso:account:access
+```
+
+Once your profile is configured, open the AWS Console in your browser:
+
+```bash
+aws-console -p admin
+```
+
+Or set the profile via environment variable:
+
+```bash
+export AWS_PROFILE=admin
+aws-console
+```
+
+If your SSO session has expired, `aws-console` will automatically run `aws sso login` to refresh it before opening the console.
+
 ## Install
 
 ```bash
