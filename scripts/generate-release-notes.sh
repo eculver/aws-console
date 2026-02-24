@@ -179,7 +179,7 @@ main() {
     subject="${line%%|*}"
     sha="${line##*|}"
     linked_subject="$(linkify_pr_refs "${subject}" "${repo_url}")"
-    item="- ${linked_subject}"
+    item="- ${linked_subject} ([${sha}](${repo_url}/commit/${sha}))"
     header="${subject%%:*}"
 
     if [[ "${subject}" == *"BREAKING CHANGE"* ]] || [[ "${header}" == *"!" ]]; then
