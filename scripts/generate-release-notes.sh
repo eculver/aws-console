@@ -150,7 +150,10 @@ main() {
     echo
   } > "${output}"
 
-  mapfile -t commit_lines < <(git log --pretty=format:'%s|%h' "${range}")
+  local commit_lines=()
+  while IFS= read -r line; do
+    commit_lines+=("${line}")
+  done < <(git log --pretty=format:'%s|%h' "${range}")
   if [[ ${#commit_lines[@]} -eq 0 ]]; then
     echo "No commits found in range ${range}" >> "${output}"
     echo "Wrote ${output}"
