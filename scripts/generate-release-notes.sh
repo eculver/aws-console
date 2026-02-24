@@ -147,10 +147,12 @@ main() {
     echo "## Release ${current_tag}"
     echo
     if [[ -n "${prev_tag}" ]]; then
+      echo "- Date: $(date +%Y-%m-%d)"
       echo "- Previous version: ${prev_tag}"
       echo "- Release type: ${release_kind}"
       echo "- Compare: ${repo_url}/compare/${prev_tag}...${current_tag}"
     else
+      echo "- Date: $(date +%Y-%m-%d)"
       echo "- Previous version: none"
       echo "- Release type: initial"
     fi
