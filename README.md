@@ -131,10 +131,12 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`) that trigger the GitHub `Release
 - Create a release tag with the helper script:
 
   ```bash
-  ./scripts/release.sh major -m "Release v2.0.0" [--push] [--yes]
-  ./scripts/release.sh minor -m "Release v1.3.0" [--push] [--yes]
-  ./scripts/release.sh bugfix -m "Release v1.2.4" [--push] [--yes]
+  ./scripts/release.sh major [--push] [--yes]
+  ./scripts/release.sh minor [--push] [--yes]
+  ./scripts/release.sh bugfix [--push] [--yes]
   ```
+
+  The annotated tag message is set automatically to the new tag name (e.g. `v2.0.0`).
 
 - `--push` pushes the tag to `origin` (which triggers GitHub release publishing).
 - `--yes` runs non-interactively (no confirmation prompts).
@@ -143,15 +145,15 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`) that trigger the GitHub `Release
 You can also call this through Make:
 
 ```bash
-make release ARGS='major -m "Release v2.0.0" --push --yes'
+make release ARGS='major --push --yes'
 ```
 
 or with explicit convenience targets:
 
 ```bash
-make release-major MESSAGE="Release v2.0.0" PUSH=1 YES=1
-make release-minor MESSAGE="Release v1.3.0" PUSH=1 YES=1
-make release-bugfix MESSAGE="Release v1.2.4" PUSH=1 YES=1
+make release-major PUSH=1 YES=1
+make release-minor PUSH=1 YES=1
+make release-bugfix PUSH=1 YES=1
 ```
 
 The GitHub release notes are generated from commits since the previous semver tag. Conventional commit messages are grouped into:
